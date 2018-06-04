@@ -95,7 +95,7 @@ func (c *commandInfo) commandExport() {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "amqp-go-tool"
+	app.Name = toolName
 	app.Usage = "[import?] and export messages from a and to a RabbitMQ"
 	app.Version = "0.0.1"
 
@@ -141,7 +141,6 @@ func main() {
 		cli.StringFlag{Name: "password", Value: "guest"},
 		cli.StringFlag{Name: "queue"},
 		cli.BoolTFlag{Name: "durable"},
-		cli.BoolTFlag{Name: "onlyBody"},
 		cli.BoolFlag{Name: "auto-ack", Usage: "Acknowledge messages (move out of the queue)"},
 		cli.IntFlag{Name: "count", Usage: "0 keeps waiting for new messages", Value: 0},
 		cli.IntFlag{Name: "prefetch", Value: 1},
@@ -152,12 +151,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	app.Action = func(ctx *cli.Context) error {
-		if !ctx.Bool("durable") {
-			return cli.NewExitError("durable value required", 1)
-		}
-		return nil
-	}
-
 }
