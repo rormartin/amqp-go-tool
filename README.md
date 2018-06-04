@@ -1,0 +1,2 @@
+# amqp-go-tool
+
