@@ -8,6 +8,8 @@ from a RabbitMQ to a file standard Stdout)
 ## Install the utility
 
 ```
+go get github.com/icemobilelab/amqp-go-tool
+
 go install github.com/icemobilelab/amqp-go-tool
 ```
 
