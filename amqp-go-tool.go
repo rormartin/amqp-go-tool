@@ -22,16 +22,19 @@ import (
 )
 
 type commandInfo struct {
-	user     string
-	password string
-	host     string
-	port     int
-	queue    string
-	durable  bool
-	autoACK  bool
-	prefetch int
-	count    int
-	file     string
+	user            string
+	password        string
+	host            string
+	port            int
+	queue           string
+	durable         bool
+	autoACK         bool
+	prefetch        int
+	count           int
+	file            string
+	formatPrefix    string
+	formatSeparator string
+	formatPostfix   string
 }
 
 const toolName = "amqp-go-tool"
@@ -68,10 +71,10 @@ func (c *commandInfo) commandExport() {
 		f = os.Stdout
 	}
 
-	f.WriteString("[ ")
+	f.WriteString(c.formatPrefix)
 	defer func() {
 		f.Seek(-1, 1)
-		_, err = f.WriteString("\n]")
+		_, err = f.WriteString(c.formatPostfix)
 		failOnError(err, "Error writing in file")
 		err = f.Close()
 		failOnError(err, "Error closing file")
@@ -81,7 +84,7 @@ func (c *commandInfo) commandExport() {
 	for msg := range msgs {
 		_, err = f.Write(msg.Body)
 		failOnError(err, "Error writing message content in file")
-		_, err = f.WriteString(",\n")
+		_, err = f.WriteString(c.formatSeparator)
 		failOnError(err, "Error writing in file")
 		if c.autoACK {
 			msg.Ack(false)
@@ -106,16 +109,19 @@ func main() {
 			Action: func(c *cli.Context) error {
 				globalCtx := c.Parent() // get global flags
 				ci := commandInfo{
-					user:     globalCtx.String("user"),
-					password: globalCtx.String("password"),
-					host:     globalCtx.String("host"),
-					port:     globalCtx.Int("port"),
-					queue:    globalCtx.String("queue"),
-					durable:  globalCtx.Bool("durable"),
-					autoACK:  globalCtx.Bool("auto-ack"),
-					prefetch: globalCtx.Int("prefetch"),
-					count:    globalCtx.Int("count"),
-					file:     globalCtx.String("file"),
+					user:            globalCtx.String("user"),
+					password:        globalCtx.String("password"),
+					host:            globalCtx.String("host"),
+					port:            globalCtx.Int("port"),
+					queue:           globalCtx.String("queue"),
+					durable:         globalCtx.Bool("durable"),
+					autoACK:         globalCtx.Bool("auto-ack"),
+					prefetch:        globalCtx.Int("prefetch"),
+					count:           globalCtx.Int("count"),
+					file:            globalCtx.String("file"),
+					formatPrefix:    globalCtx.String("formatPrefix"),
+					formatSeparator: globalCtx.String("formatSeparator"),
+					formatPostfix:   globalCtx.String("formatPostfix"),
 				}
 				if ci.queue == "" {
 					return cli.NewExitError("Queue not defined", 1)
@@ -145,6 +151,9 @@ func main() {
 		cli.IntFlag{Name: "count", Usage: "0 keeps waiting for new messages", Value: 0},
 		cli.IntFlag{Name: "prefetch", Value: 1},
 		cli.StringFlag{Name: "file, f"},
+		cli.StringFlag{Name: "formatPrefix", Value: "[\n"},
+		cli.StringFlag{Name: "formatSeparator", Value: ",\n"},
+		cli.StringFlag{Name: "formatPostfix", Value: "\n]"},
 	}
 
 	err := app.Run(os.Args)
