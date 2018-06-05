@@ -34,12 +34,15 @@ GLOBAL OPTIONS:
    --port value            (default: 5672)
    --user value            (default: "guest")
    --password value        (default: "guest")
-   --queue value           
-   --durable               
+   --queue value
+   --durable
    --auto-ack              Acknowledge messages (move out of the queue)
    --count value           0 keeps waiting for new messages (default: 0)
    --prefetch value        (default: 1)
-   --file value, -f value  
+   --file value, -f value
+   --formatPrefix value     (default: "[\n")
+   --formatSeparator value  (default: ",\n")
+   --formatPostfix value    (default: "\n]")
    --help, -h              show help
    --version, -v           print the version
 ```
