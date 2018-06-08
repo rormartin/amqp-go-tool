@@ -20,6 +20,7 @@ import (
 	"strconv"
 )
 
+// Basic structure to execute amqp commands
 type CommandInfo struct {
 	User            string
 	Password        string
@@ -37,6 +38,8 @@ type CommandInfo struct {
 
 const toolName = "amqp-go-tool"
 
+// Export the content of a queue using the queue configuration and
+// predefined format.
 func (c *CommandInfo) CommandExport(queue string) error {
 	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
 	if err != nil {
@@ -62,7 +65,7 @@ func (c *CommandInfo) CommandExport(queue string) error {
 
 	err = ch.Qos(c.Prefetch, 0, false) // prefetch count
 	if err != nil {
-		fmt.Errorf("Error defining prefetch: %v", err)
+		return fmt.Errorf("Error defining prefetch: %v", err)
 	}
 
 	var f *os.File
@@ -111,42 +114,45 @@ func (c *CommandInfo) CommandExport(queue string) error {
 	return nil
 }
 
+// Command to copy or move messages from one queue to another one. The
+// copy is a exact one: it propagate the meta-information of the
+// message, not just the content.
 func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
 	if err != nil {
-		fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
+		return fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
 	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
 	if err != nil {
-		fmt.Errorf("Failed to open a channel: %v", err)
+		return fmt.Errorf("Failed to open a channel: %v", err)
 	}
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(srcQueue, c.Durable, false, false, false, nil)
 	if err != nil {
-		fmt.Errorf("Failed to declare a queue: %v", err)
+		return fmt.Errorf("Failed to declare a queue: %v", err)
 	}
 
 	msgs, err := ch.Consume(q.Name, toolName, false, false, false, false, nil)
 	if err != nil {
-		fmt.Errorf("Failed to register a consumer: %v", err)
+		return fmt.Errorf("Failed to register a consumer: %v", err)
 	}
 
 	err = ch.Qos(c.Prefetch, 0, false) // prefetch count
 	if err != nil {
-		fmt.Errorf("Error defining prefetch: %v", err)
+		return fmt.Errorf("Error defining prefetch: %v", err)
 	}
 
 	chDst, err := conn.Channel()
 	if err != nil {
-		fmt.Errorf("Failed to open a destiny channel: %v", err)
+		return fmt.Errorf("Failed to open a destiny channel: %v", err)
 	}
 
 	_, err = chDst.QueueDeclare(dstQueue, c.Durable, false, false, false, nil)
 	if err != nil {
-		fmt.Errorf("Failed to declare destiny queue: %v", err)
+		return fmt.Errorf("Failed to declare destiny queue: %v", err)
 	}
 
 	var f *os.File
@@ -154,7 +160,7 @@ func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 	if c.File != "" {
 		f, err = os.Create(c.File)
 		if err != nil {
-			fmt.Errorf("Failed to create output file: %v", err)
+			return fmt.Errorf("Failed to create output file: %v", err)
 		}
 	} else {
 		f = os.Stdout
@@ -165,11 +171,11 @@ func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 		f.Seek(-1, 1)
 		_, err = f.WriteString(c.FormatPostfix)
 		if err != nil {
-			fmt.Errorf("Error writing in file: %v", err)
+			return fmt.Errorf("Error writing in file: %v", err)
 		}
 		err = f.Close()
 		if err != nil {
-			fmt.Errorf("Error closing file: %v", err)
+			return fmt.Errorf("Error closing file: %v", err)
 		}
 		return nil
 	}()
@@ -194,15 +200,15 @@ func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 		}
 		err = chDst.Publish("", dstQueue, false, false, amqpMsg)
 		if err != nil {
-			fmt.Errorf("Error on message publishing: %v", err)
+			return fmt.Errorf("Error on message publishing: %v", err)
 		}
 		_, err = f.Write(msg.Body)
 		if err != nil {
-			fmt.Errorf("Error writing message content in file: %v", err)
+			return fmt.Errorf("Error writing message content in file: %v", err)
 		}
 		_, err = f.WriteString(c.FormatSeparator)
 		if err != nil {
-			fmt.Errorf("Error writing in file: %v", err)
+			return fmt.Errorf("Error writing in file: %v", err)
 		}
 		if c.AutoACK {
 			msg.Ack(false)
