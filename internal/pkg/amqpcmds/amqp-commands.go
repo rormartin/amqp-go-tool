@@ -75,7 +75,6 @@ func (c *CommandInfo) CommandExport(queue string) error {
 
 	f.WriteString(c.FormatPrefix)
 	defer func() error {
-		f.Seek(-1, 1)
 		_, err = f.WriteString(c.FormatPostfix)
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
@@ -93,7 +92,9 @@ func (c *CommandInfo) CommandExport(queue string) error {
 		if err != nil {
 			return fmt.Errorf("Error writing message content in file: %v", err)
 		}
-		_, err = f.WriteString(c.FormatSeparator)
+		if !(counter+1 > c.Count-1) {
+			_, err = f.WriteString(c.FormatSeparator)
+		}
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
@@ -152,7 +153,6 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 
 	f.WriteString(c.FormatPrefix)
 	defer func() error {
-		f.Seek(-1, 1)
 		_, err = f.WriteString(c.FormatPostfix)
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
@@ -190,7 +190,9 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 		if err != nil {
 			return fmt.Errorf("Error writing message content in file: %v", err)
 		}
-		_, err = f.WriteString(c.FormatSeparator)
+		if !(counter+1 > c.Count-1) {
+			_, err = f.WriteString(c.FormatSeparator)
+		}
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
