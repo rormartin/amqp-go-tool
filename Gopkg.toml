@@ -4,8 +4,8 @@
 # for detailed Gopkg.toml documentation.
 
 [[constraint]]
-  name = "github.com/urfave/cli"
-  version = "v1.19.1"
+  name = "github.com/spf13/cobra"
+  version = "v0.0.3"
   
 [[constraint]]
   name = "github.com/streadway/amqp"
