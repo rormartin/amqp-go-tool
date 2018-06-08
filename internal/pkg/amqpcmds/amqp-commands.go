@@ -20,7 +20,7 @@ import (
 	"strconv"
 )
 
-// Basic structure to execute amqp commands
+// CommandInfo defines a basic structure to execute amqp commands
 type CommandInfo struct {
 	User            string
 	Password        string
@@ -38,8 +38,8 @@ type CommandInfo struct {
 
 const toolName = "amqp-go-tool"
 
-// Export the content of a queue using the queue configuration and
-// predefined format.
+// CommandExport exports the content of a queue using the queue
+// configuration and predefined format.
 func (c *CommandInfo) CommandExport(queue string) error {
 	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
 	if err != nil {
@@ -114,9 +114,9 @@ func (c *CommandInfo) CommandExport(queue string) error {
 	return nil
 }
 
-// Command to copy or move messages from one queue to another one. The
-// copy is a exact one: it propagate the meta-information of the
-// message, not just the content.
+// CommandMoveToQueue copy or moves messages from one queue to another
+// one. The copy is a exact one: it propagate the meta-information of
+// the message, not just the content.
 func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
 	if err != nil {
