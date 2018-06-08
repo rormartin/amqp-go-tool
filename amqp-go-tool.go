@@ -14,6 +14,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/streadway/amqp"
 	"github.com/urfave/cli"
 	"log"
@@ -39,53 +40,69 @@ type commandInfo struct {
 
 const toolName = "amqp-go-tool"
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
-
-func (c *commandInfo) commandExport() {
+func (c *commandInfo) commandExport() error {
 	conn, err := amqp.Dial("amqp://" + c.user + ":" + c.password + "@" + c.host + ":" + strconv.Itoa(c.port) + "/")
-	failOnError(err, "Failed to connect to RabbitMQ")
+	if err != nil {
+		return fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
+	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
+	if err != nil {
+		return fmt.Errorf("Failed to open a channel: %v", err)
+	}
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(c.queue, c.durable, false, false, false, nil)
-	failOnError(err, "Failed to declare a queue")
+	if err != nil {
+		return fmt.Errorf("Failed to declare a queue: %v", err)
+	}
 
 	msgs, err := ch.Consume(q.Name, toolName, false, false, false, false, nil)
-	failOnError(err, "Failed to register a consumer")
+	if err != nil {
+		return fmt.Errorf("Failed to register a consumer: %v", err)
+	}
 
 	err = ch.Qos(c.prefetch, 0, false) // prefetch count
+	if err != nil {
+		fmt.Errorf("Error defining prefetch: %v", err)
+	}
 
 	var f *os.File
 	// manage file
 	if c.file != "" {
 		f, err = os.Create(c.file)
-		failOnError(err, "Failed to create output file")
+		if err != nil {
+			return fmt.Errorf("Failed to create output file: %v", err)
+		}
 	} else {
 		f = os.Stdout
 	}
 
 	f.WriteString(c.formatPrefix)
-	defer func() {
+	defer func() error {
 		f.Seek(-1, 1)
 		_, err = f.WriteString(c.formatPostfix)
-		failOnError(err, "Error writing in file")
+		if err != nil {
+			return fmt.Errorf("Error writing in file: %v", err)
+		}
 		err = f.Close()
-		failOnError(err, "Error closing file")
+		if err != nil {
+			return fmt.Errorf("Error closing file: %v", err)
+		}
+		return nil
 	}()
 
 	counter := 0
 	for msg := range msgs {
 		_, err = f.Write(msg.Body)
-		failOnError(err, "Error writing message content in file")
+		if err != nil {
+			return fmt.Errorf("Error writing message content in file: %v", err)
+		}
 		_, err = f.WriteString(c.formatSeparator)
-		failOnError(err, "Error writing in file")
+		if err != nil {
+			return fmt.Errorf("Error writing in file: %v", err)
+		}
 		if c.autoACK {
 			msg.Ack(false)
 		}
@@ -94,47 +111,70 @@ func (c *commandInfo) commandExport() {
 			break
 		}
 	}
+	return nil
 }
 
-func (c *commandInfo) commandMoveToQueue(queueDst string) {
+func (c *commandInfo) commandMoveToQueue(queueDst string) error {
 	conn, err := amqp.Dial("amqp://" + c.user + ":" + c.password + "@" + c.host + ":" + strconv.Itoa(c.port) + "/")
-	failOnError(err, "Failed to connect to RabbitMQ")
+	if err != nil {
+		fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
+	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
+	if err != nil {
+		fmt.Errorf("Failed to open a channel: %v", err)
+	}
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(c.queue, c.durable, false, false, false, nil)
-	failOnError(err, "Failed to declare a queue")
+	if err != nil {
+		fmt.Errorf("Failed to declare a queue: %v", err)
+	}
 
 	msgs, err := ch.Consume(q.Name, toolName, false, false, false, false, nil)
-	failOnError(err, "Failed to register a consumer")
+	if err != nil {
+		fmt.Errorf("Failed to register a consumer: %v", err)
+	}
 
 	err = ch.Qos(c.prefetch, 0, false) // prefetch count
+	if err != nil {
+		fmt.Errorf("Error defining prefetch: %v", err)
+	}
 
 	chDst, err := conn.Channel()
-	failOnError(err, "Failed to open a destiny channel")
+	if err != nil {
+		fmt.Errorf("Failed to open a destiny channel: %v", err)
+	}
 
 	_, err = chDst.QueueDeclare(queueDst, c.durable, false, false, false, nil)
-	failOnError(err, "Failed to declare destiny queue")
+	if err != nil {
+		fmt.Errorf("Failed to declare destiny queue: %v", err)
+	}
 
 	var f *os.File
 	// manage file
 	if c.file != "" {
 		f, err = os.Create(c.file)
-		failOnError(err, "Failed to create output file")
+		if err != nil {
+			fmt.Errorf("Failed to create output file: %v", err)
+		}
 	} else {
 		f = os.Stdout
 	}
 
 	f.WriteString(c.formatPrefix)
-	defer func() {
+	defer func() error {
 		f.Seek(-1, 1)
 		_, err = f.WriteString(c.formatPostfix)
-		failOnError(err, "Error writing in file")
+		if err != nil {
+			fmt.Errorf("Error writing in file: %v", err)
+		}
 		err = f.Close()
-		failOnError(err, "Error closing file")
+		if err != nil {
+			fmt.Errorf("Error closing file: %v", err)
+		}
+		return nil
 	}()
 
 	counter := 0
@@ -156,11 +196,17 @@ func (c *commandInfo) commandMoveToQueue(queueDst string) {
 			Body:            msg.Body,
 		}
 		err = chDst.Publish("", queueDst, false, false, amqpMsg)
-		failOnError(err, "Error on message publishing")
+		if err != nil {
+			fmt.Errorf("Error on message publishing: %v", err)
+		}
 		_, err = f.Write(msg.Body)
-		failOnError(err, "Error writing message content in file")
+		if err != nil {
+			fmt.Errorf("Error writing message content in file: %v", err)
+		}
 		_, err = f.WriteString(c.formatSeparator)
-		failOnError(err, "Error writing in file")
+		if err != nil {
+			fmt.Errorf("Error writing in file: %v", err)
+		}
 		if c.autoACK {
 			msg.Ack(false)
 		}
@@ -169,6 +215,7 @@ func (c *commandInfo) commandMoveToQueue(queueDst string) {
 			break
 		}
 	}
+	return nil
 }
 
 func main() {
@@ -201,8 +248,7 @@ func main() {
 				if ci.queue == "" {
 					return cli.NewExitError("Queue not defined", 1)
 				}
-				ci.commandExport()
-				return nil
+				return ci.commandExport()
 			},
 		},
 		{
@@ -237,8 +283,7 @@ func main() {
 					return cli.NewExitError("Destiny queue not defined", 1)
 				}
 
-				ci.commandMoveToQueue(c.String("destiny"))
-				return nil
+				return ci.commandMoveToQueue(c.String("destiny"))
 			},
 		},
 		// {
