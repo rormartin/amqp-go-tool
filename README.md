@@ -20,10 +20,11 @@ Usage:
   amqp-go-tool [command]
 
 Available Commands:
+  copy        Copy messages from one queue to another one
   export      Export the messages from a RabbitMQ queue
   help        Help about any command
-  move        Copy or move messages from one queue to another one
-
+  move        Move messages from one queue to another one
+  
 Flags:
       --config string     config file (default is $HOME/.amqp-go-tool.yaml)
   -h, --help              help for amqp-go-tool
