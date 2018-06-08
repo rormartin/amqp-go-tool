@@ -21,10 +21,10 @@ import (
 )
 
 // moveCmd represents the move command
-var moveCmd = &cobra.Command{
-	Use:   "move [origin_queue] [destiny_queue]",
-	Short: "Move messages from one queue to another one",
-	Long: `Move messages from one queue to another one.
+var copyCmd = &cobra.Command{
+	Use:   "copy [origin_queue] [destiny_queue]",
+	Short: "Copy messages from one queue to another one",
+	Long: `Copy messages from one queue to another one.
 
 The messages processed are also written in a external file (or stdout
 if file is not specified).  `,
@@ -38,7 +38,7 @@ if file is not specified).  `,
 			Password:        password,
 			Host:            host,
 			Port:            port,
-			AutoACK:         true,
+			AutoACK:         false,
 			Prefetch:        prefetch,
 			Count:           count,
 			File:            file,
@@ -54,12 +54,12 @@ if file is not specified).  `,
 }
 
 func init() {
-	rootCmd.AddCommand(moveCmd)
+	rootCmd.AddCommand(copyCmd)
 
-	moveCmd.Flags().StringVar(&file, "file", "", "Output file for messages (no value for stdout)")
-	moveCmd.Flags().IntVar(&count, "count", 0, "Messages to export (0 for keep waiting for messages)")
-	moveCmd.Flags().IntVar(&prefetch, "prefetch", 1, "Prefetch value to consumer messages")
-	moveCmd.Flags().StringVar(&formatPrefix, "formatPrefix", "", "Prefix value for the message list")
-	moveCmd.Flags().StringVar(&formatSeparator, "formatSeparator", "\n", "Separator between messages")
-	moveCmd.Flags().StringVar(&formatPostfix, "formatPostfix", "", "Post-fix value for the message list")
+	copyCmd.Flags().StringVar(&file, "file", "", "Output file for messages (no value for stdout)")
+	copyCmd.Flags().IntVar(&count, "count", 0, "Messages to export (0 for keep waiting for messages)")
+	copyCmd.Flags().IntVar(&prefetch, "prefetch", 1, "Prefetch value to consumer messages")
+	copyCmd.Flags().StringVar(&formatPrefix, "formatPrefix", "", "Prefix value for the message list")
+	copyCmd.Flags().StringVar(&formatSeparator, "formatSeparator", "\n", "Separator between messages")
+	copyCmd.Flags().StringVar(&formatPostfix, "formatPostfix", "", "Post-fix value for the message list")
 }

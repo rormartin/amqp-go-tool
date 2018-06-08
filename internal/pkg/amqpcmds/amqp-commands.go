@@ -26,7 +26,6 @@ type CommandInfo struct {
 	Password        string
 	Host            string
 	Port            int
-	Durable         bool
 	AutoACK         bool
 	Prefetch        int
 	Count           int
@@ -53,12 +52,7 @@ func (c *CommandInfo) CommandExport(queue string) error {
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(queue, c.Durable, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to declare a queue: %v", err)
-	}
-
-	msgs, err := ch.Consume(q.Name, toolName, false, false, false, false, nil)
+	msgs, err := ch.Consume(queue, toolName, false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to register a consumer: %v", err)
 	}
@@ -114,10 +108,10 @@ func (c *CommandInfo) CommandExport(queue string) error {
 	return nil
 }
 
-// CommandMoveToQueue copy or moves messages from one queue to another
+// CommandCopyMoveToQueue copy or moves messages from one queue to another
 // one. The copy is a exact one: it propagate the meta-information of
 // the message, not just the content.
-func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
+func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
 	if err != nil {
 		return fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
@@ -130,12 +124,7 @@ func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(srcQueue, c.Durable, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to declare a queue: %v", err)
-	}
-
-	msgs, err := ch.Consume(q.Name, toolName, false, false, false, false, nil)
+	msgs, err := ch.Consume(srcQueue, toolName, false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to register a consumer: %v", err)
 	}
@@ -148,11 +137,6 @@ func (c *CommandInfo) CommandMoveToQueue(srcQueue, dstQueue string) error {
 	chDst, err := conn.Channel()
 	if err != nil {
 		return fmt.Errorf("Failed to open a destiny channel: %v", err)
-	}
-
-	_, err = chDst.QueueDeclare(dstQueue, c.Durable, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to declare destiny queue: %v", err)
 	}
 
 	var f *os.File

@@ -20,7 +20,6 @@ import (
 )
 
 var (
-	durable         bool
 	autoAck         bool
 	prefetch        int
 	count           int
@@ -46,7 +45,6 @@ custom formatting.  `,
 			Password:        password,
 			Host:            host,
 			Port:            port,
-			Durable:         durable,
 			AutoACK:         autoAck,
 			Prefetch:        prefetch,
 			Count:           count,
@@ -66,7 +64,6 @@ func init() {
 
 	exportCmd.Flags().StringVar(&file, "file", "", "Output file for messages (no value for stdout)")
 	exportCmd.Flags().IntVar(&count, "count", 0, "Messages to export (0 for keep waiting for messages)")
-	exportCmd.Flags().BoolVar(&durable, "durable", true, "Durable property for the queue")
 	exportCmd.Flags().IntVar(&prefetch, "prefetch", 1, "Prefetch value to consumer messages")
 	exportCmd.Flags().BoolVar(&autoAck, "auto-ack", false, "Auto ACK the messages after exported")
 	exportCmd.Flags().StringVar(&formatPrefix, "formatPrefix", "", "Prefix value for the message list")
