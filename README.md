@@ -2,10 +2,7 @@
 
 Command line tool to manage data in RabbitMQ queues and exchanges as a client.
 
-Currently, only implemented export functionally (export the messages
-from a RabbitMQ to a file standard Stdout)
-
-## Install the utility
+## Install the utility tool
 
 ```
 go get github.com/icemobilelab/amqp-go-tool
@@ -16,33 +13,23 @@ go install github.com/icemobilelab/amqp-go-tool
 ## Parameters
 
 ```
-NAME:
-   amqp-go-tool - [import?] and export messages from a and to a RabbitMQ
+Move and export messages from a and to a RabbitMQ
 
-USAGE:
-   amqp-go-tool [global options] command [command options] [arguments...]
+Usage:
+  amqp-go-tool [command]
 
-VERSION:
-   0.0.1
+Available Commands:
+  export      Export the messages from a RabbitMQ queue
+  help        Help about any command
+  move        Copy or move messages from one queue to another one
 
-COMMANDS:
-     export   Export the content of a queue
-     help, h  Shows a list of commands or help for one command
+Flags:
+      --config string     config file (default is $HOME/.amqp-go-tool.yaml)
+  -h, --help              help for amqp-go-tool
+      --host string       RabbitMQ host name (default "localhost")
+      --password string   RabbitMQ password (default "guest")
+      --port int          RabbitMQ port (default 5672)
+      --username string   RabbitMQ username (default "guest")
 
-GLOBAL OPTIONS:
-   --host value            (default: "localhost")
-   --port value            (default: 5672)
-   --user value            (default: "guest")
-   --password value        (default: "guest")
-   --queue value
-   --durable
-   --auto-ack              Acknowledge messages (move out of the queue)
-   --count value           0 keeps waiting for new messages (default: 0)
-   --prefetch value        (default: 1)
-   --file value, -f value
-   --formatPrefix value     (default: "[\n")
-   --formatSeparator value  (default: ",\n")
-   --formatPostfix value    (default: "\n]")
-   --help, -h              show help
-   --version, -v           print the version
+Use "amqp-go-tool [command] --help" for more information about a command.
 ```
