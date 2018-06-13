@@ -22,25 +22,65 @@ import (
 
 // CommandInfo defines a basic structure to execute amqp commands
 type CommandInfo struct {
-	User            string
-	Password        string
-	Host            string
-	Port            int
-	AutoACK         bool
-	Prefetch        int
-	Count           int
-	File            string
-	FormatPrefix    string
-	FormatSeparator string
-	FormatPostfix   string
+	user            string
+	password        string
+	host            string
+	port            int
+	autoACK         bool
+	prefetch        int
+	count           int
+	file            string
+	formatPrefix    string
+	formatSeparator string
+	formatPostfix   string
+	dialer          func(string) (amqpConnection, error)
 }
 
 const toolName = "amqp-go-tool"
 
+// AmqpCommand general interface for the command execution
+type AmqpCommand interface {
+	CommandExport(queue string) error
+	CommandCopyMoveToQueue(srcQueue, dstQueue string) error
+}
+
+// NewCommandInfo creates a new instance that can execute the Amqp
+// commands, with the default amqp dialer wrapper
+func NewCommandInfo(user, password, host string,
+	port int,
+	autoACK bool,
+	prefetch, count int,
+	file, formatPrefix, formatSeparator, formatPostfix string) AmqpCommand {
+
+	d := func(url string) (amqpConnection, error) {
+		conn, err := amqp.Dial(url)
+		if err != nil {
+			return nil, err
+		}
+		return &wrapperConn{conn: conn}, nil
+	}
+
+	ci := CommandInfo{
+		user:            user,
+		password:        password,
+		host:            host,
+		port:            port,
+		autoACK:         autoACK,
+		prefetch:        prefetch,
+		count:           count,
+		file:            file,
+		formatPrefix:    formatPrefix,
+		formatSeparator: formatSeparator,
+		formatPostfix:   formatPostfix,
+		dialer:          d,
+	}
+	return &ci
+}
+
 // CommandExport exports the content of a queue using the queue
 // configuration and predefined format.
 func (c *CommandInfo) CommandExport(queue string) error {
-	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
+	conn, err := c.dialer("amqp://" + c.user + ":" + c.password + "@" + c.host + ":" + strconv.Itoa(c.port) + "/")
 	if err != nil {
 		return fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
 	}
@@ -57,15 +97,15 @@ func (c *CommandInfo) CommandExport(queue string) error {
 		return fmt.Errorf("Failed to register a consumer: %v", err)
 	}
 
-	err = ch.Qos(c.Prefetch, 0, false) // prefetch count
+	err = ch.Qos(c.prefetch, 0, false) // prefetch count
 	if err != nil {
 		return fmt.Errorf("Error defining prefetch: %v", err)
 	}
 
 	var f *os.File
 	// manage file
-	if c.File != "" {
-		f, err = os.Create(c.File)
+	if c.file != "" {
+		f, err = os.Create(c.file)
 		if err != nil {
 			return fmt.Errorf("Failed to create output file: %v", err)
 		}
@@ -73,9 +113,9 @@ func (c *CommandInfo) CommandExport(queue string) error {
 		f = os.Stdout
 	}
 
-	f.WriteString(c.FormatPrefix)
+	f.WriteString(c.formatPrefix)
 	defer func() error {
-		_, err = f.WriteString(c.FormatPostfix)
+		_, err = f.WriteString(c.formatPostfix)
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
@@ -92,17 +132,17 @@ func (c *CommandInfo) CommandExport(queue string) error {
 		if err != nil {
 			return fmt.Errorf("Error writing message content in file: %v", err)
 		}
-		if !(counter+1 > c.Count-1) {
-			_, err = f.WriteString(c.FormatSeparator)
+		if !(counter+1 > c.count-1) || c.count == 0 {
+			_, err = f.WriteString(c.formatSeparator)
 		}
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
-		if c.AutoACK {
+		if c.autoACK {
 			msg.Ack(false)
 		}
 		counter++
-		if (c.Count != 0) && (counter > c.Count-1) {
+		if (c.count != 0) && (counter > c.count-1) {
 			break
 		}
 	}
@@ -113,7 +153,7 @@ func (c *CommandInfo) CommandExport(queue string) error {
 // one. The copy is a exact one: it propagate the meta-information of
 // the message, not just the content.
 func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
-	conn, err := amqp.Dial("amqp://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/")
+	conn, err := c.dialer("amqp://" + c.user + ":" + c.password + "@" + c.host + ":" + strconv.Itoa(c.port) + "/")
 	if err != nil {
 		return fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
 	}
@@ -130,7 +170,7 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 		return fmt.Errorf("Failed to register a consumer: %v", err)
 	}
 
-	err = ch.Qos(c.Prefetch, 0, false) // prefetch count
+	err = ch.Qos(c.prefetch, 0, false) // prefetch count
 	if err != nil {
 		return fmt.Errorf("Error defining prefetch: %v", err)
 	}
@@ -142,8 +182,8 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 
 	var f *os.File
 	// manage file
-	if c.File != "" {
-		f, err = os.Create(c.File)
+	if c.file != "" {
+		f, err = os.Create(c.file)
 		if err != nil {
 			return fmt.Errorf("Failed to create output file: %v", err)
 		}
@@ -151,9 +191,9 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 		f = os.Stdout
 	}
 
-	f.WriteString(c.FormatPrefix)
+	f.WriteString(c.formatPrefix)
 	defer func() error {
-		_, err = f.WriteString(c.FormatPostfix)
+		_, err = f.WriteString(c.formatPostfix)
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
@@ -190,17 +230,17 @@ func (c *CommandInfo) CommandCopyMoveToQueue(srcQueue, dstQueue string) error {
 		if err != nil {
 			return fmt.Errorf("Error writing message content in file: %v", err)
 		}
-		if !(counter+1 > c.Count-1) {
-			_, err = f.WriteString(c.FormatSeparator)
+		if !(counter+1 > c.count-1) || c.count == 0 {
+			_, err = f.WriteString(c.formatSeparator)
 		}
 		if err != nil {
 			return fmt.Errorf("Error writing in file: %v", err)
 		}
-		if c.AutoACK {
+		if c.autoACK {
 			msg.Ack(false)
 		}
 		counter++
-		if (c.Count != 0) && (counter > c.Count-1) {
+		if (c.count != 0) && (counter > c.count-1) {
 			break
 		}
 	}

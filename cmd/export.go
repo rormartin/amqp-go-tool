@@ -40,20 +40,20 @@ custom formatting.  `,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		queue := args[0]
-		ci := amqpcmds.CommandInfo{
-			User:            username,
-			Password:        password,
-			Host:            host,
-			Port:            port,
-			AutoACK:         autoAck,
-			Prefetch:        prefetch,
-			Count:           count,
-			File:            file,
-			FormatPrefix:    formatPrefix,
-			FormatSeparator: formatSeparator,
-			FormatPostfix:   formatPostfix,
-		}
-		err := ci.CommandExport(queue)
+		amcmd := amqpcmds.NewCommandInfo(
+			username,
+			password,
+			host,
+			port,
+			autoAck,
+			prefetch,
+			count,
+			file,
+			formatPrefix,
+			formatSeparator,
+			formatPostfix,
+		)
+		err := amcmd.CommandExport(queue)
 		if err != nil {
 			log.Fatal(err)
 		}
