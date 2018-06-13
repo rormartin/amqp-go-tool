@@ -33,20 +33,20 @@ if file is not specified).  `,
 	Run: func(cmd *cobra.Command, args []string) {
 		src := args[0]
 		dst := args[1]
-		ci := amqpcmds.CommandInfo{
-			User:            username,
-			Password:        password,
-			Host:            host,
-			Port:            port,
-			AutoACK:         false,
-			Prefetch:        prefetch,
-			Count:           count,
-			File:            file,
-			FormatPrefix:    formatPrefix,
-			FormatSeparator: formatSeparator,
-			FormatPostfix:   formatPostfix,
-		}
-		err := ci.CommandCopyMoveToQueue(src, dst)
+		amcmd := amqpcmds.NewCommandInfo(
+			username,
+			password,
+			host,
+			port,
+			false,
+			prefetch,
+			count,
+			file,
+			formatPrefix,
+			formatSeparator,
+			formatPostfix,
+		)
+		err := amcmd.CommandCopyMoveToQueue(src, dst)
 		if err != nil {
 			log.Fatal(err)
 		}
