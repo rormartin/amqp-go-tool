@@ -32,8 +32,9 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "amqp-go-tool",
-	Short: "Move and export messages from a and to a RabbitMQ",
+	Use:     "amqp-go-tool",
+	Version: "0.0.1",
+	Short:   "Move and export messages from a and to a RabbitMQ",
 	Long: `Move and export messages from a and to a RabbitMQ
 `,
 }
