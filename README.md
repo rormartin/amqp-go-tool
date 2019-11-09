@@ -1,15 +1,15 @@
 # amqp-go-tool
-[![Coverage Status](https://coveralls.io/repos/github/icemobilelab/amqp-go-tool/badge.svg)](https://coveralls.io/github/icemobilelab/amqp-go-tool)
-[![Go Report Card](https://goreportcard.com/badge/github.com/icemobilelab/amqp-go-tool)](https://goreportcard.com/report/github.com/icemobilelab/amqp-go-tool)
+[![Coverage Status](https://coveralls.io/repos/github/rormartin/amqp-go-tool/badge.svg)](https://coveralls.io/github/rormartin/amqp-go-tool)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rormartin/amqp-go-tool)](https://goreportcard.com/report/github.com/rormartin/amqp-go-tool)
 
 Command line tool to manage data in RabbitMQ queues and exchanges as a client.
 
 ## Install the utility tool
 
 ```
-go get github.com/icemobilelab/amqp-go-tool
+go get github.com/rormartin/amqp-go-tool
 
-go install github.com/icemobilelab/amqp-go-tool
+go install github.com/rormartin/amqp-go-tool
 ```
 
 ## Command line

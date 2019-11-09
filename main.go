@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/icemobilelab/amqp-go-tool/cmd"
+	"github.com/rormartin/amqp-go-tool/cmd"
 )
 
 func main() {
