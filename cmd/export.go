@@ -14,7 +14,7 @@
 package cmd
 
 import (
-	"github.com/icemobilelab/amqp-go-tool/internal/pkg/amqpcmds"
+	"github.com/rormartin/amqp-go-tool/internal/pkg/amqpcmds"
 	"github.com/spf13/cobra"
 	"log"
 )
